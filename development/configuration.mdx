@@ -1,0 +1,150 @@
+---
+title: "Configuration"
+description: "Understand the build, lint, and deployment configuration files in Low-Poly Ocean."
+---
+
+The project has three configuration files you'll work with: `vite.config.js` for the build and dev server, `eslint.config.js` for code quality, and `vercel.json` for deployment.
+
+## Vite (`vite.config.js`)
+
+```javascript vite.config.js
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    allowedHosts: true,
+    host: true,
+    // hmr: {
+    //     clientPort: 443,
+    // },
+  },
+});
+```
+
+### Plugin
+
+`@vitejs/plugin-react` enables two features:
+
+- **React Fast Refresh** — updates components in the browser without a full page reload during development.
+- **JSX transform** — compiles `.jsx` files without requiring a manual `import React from 'react'` at the top of every file.
+
+### Server options
+
+| Option | Value | Effect |
+|---|---|---|
+| `host` | `true` | Binds the dev server to `0.0.0.0`, making it reachable from other devices on the same network. |
+| `allowedHosts` | `true` | Disables the allowed-host security check. Useful in containerized or cloud development environments. |
+
+<Warning>
+  `allowedHosts: true` disables host-header validation. This is intentional for development in remote or sandboxed environments, but you should not expose the dev server to untrusted networks.
+</Warning>
+
+The commented-out `hmr.clientPort: 443` block is for environments (such as cloud IDEs) that proxy the WebSocket connection for hot module replacement over HTTPS. Uncomment it if Fast Refresh stops working in a reverse-proxy setup.
+
+### Build output
+
+Vite's default build output directory is `dist/`. This is where `vite build` places the compiled assets and is what Vercel serves in production.
+
+## ESLint (`eslint.config.js`)
+
+The project uses ESLint's flat config format (ESLint 9+).
+
+```javascript eslint.config.js
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{js,jsx}'],
+    extends: [
+      js.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+])
+```
+
+### What it covers
+
+| Setting | Detail |
+|---|---|
+| `globalIgnores(['dist'])` | Skips the compiled output directory. |
+| `files: ['**/*.{js,jsx}']` | Lints all JavaScript and JSX source files. |
+| `js.configs.recommended` | ESLint's standard rule set. |
+| `reactHooks.configs.flat.recommended` | Enforces the [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) — hooks must be called at the top level of a component, not inside conditions or loops. |
+| `reactRefresh.configs.vite` | Warns when a module exports something that breaks Fast Refresh (e.g., mixing component exports with plain value exports). |
+| `globals.browser` | Adds browser globals (`window`, `document`, etc.) so ESLint doesn't flag them as undefined. |
+| `sourceType: 'module'` | Treats all files as ES modules, consistent with `"type": "module"` in `package.json`. |
+
+### `no-unused-vars` rule
+
+```javascript
+'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }]
+```
+
+Variables whose names start with an uppercase letter or underscore are exempt from the unused-variable check. This allows you to import and destructure constants (like named exports from `animalConfig.js`) without ESLint flagging them.
+
+## Vercel (`vercel.json`)
+
+```json vercel.json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+This configures Vercel to rewrite every request to `/index.html`. This is the standard SPA routing pattern: because React Router handles navigation on the client, any URL the user visits or refreshes must be served the same `index.html` entry point. Without this rewrite, navigating directly to a route like `/detail?id=turtle` would return a 404 from the server.
+
+## ES module mode (`"type": "module"`)
+
+```json package.json (excerpt)
+{
+  "type": "module"
+}
+```
+
+Setting `"type": "module"` tells Node.js to treat `.js` files as ECMAScript modules (using `import`/`export`) rather than CommonJS (`require`/`module.exports`). This is required because Vite's config file (`vite.config.js`) and ESLint's config file (`eslint.config.js`) both use `import` syntax.
+
+## Environment variables
+
+The project does not currently define any custom environment variables. If you need to add one:
+
+1. Create a `.env` file at the project root.
+2. Prefix the variable name with `VITE_` so Vite exposes it to client-side code.
+3. Access it in source files via `import.meta.env.VITE_YOUR_VAR`.
+
+```bash .env
+VITE_API_URL=https://example.com/api
+```
+
+```javascript src/example.js
+const apiUrl = import.meta.env.VITE_API_URL;
+```
+
+<Note>
+  `.env` files containing secrets should never be committed. The project's `.gitignore` includes `*.local` to exclude `.env.local` and similar local-only overrides.
+</Note>

@@ -1,0 +1,207 @@
+---
+title: Data model
+description: The structure of animalConfig.js and animalDetails.json — the two static data files that drive every animal in Low-Poly Ocean.
+---
+
+All animal data lives in two files inside `src/data/`. Neither file is fetched at runtime; Vite bundles both into the client at build time.
+
+| File | Format | Contains |
+|---|---|---|
+| `animalConfig.js` | ES module | `ANIMALS` array — shard geometry and colors for polygon rendering |
+| `animalDetails.json` | JSON | Conservation text per animal across three topics |
+
+---
+
+## `animalConfig.js` — the `ANIMALS` array
+
+Each entry in `ANIMALS` describes one animal's polygon illustration as a list of triangular shards.
+
+### TypeScript-style interface
+
+```typescript
+interface Shard {
+  clipPath: string;  // CSS polygon() value defining the triangle's vertices (percentage coordinates)
+  color: string;     // Hex color for this shard's fill
+  order: number;     // Numeric index controlling the animation reveal sequence
+  shard: number;     // 1-based identifier for this specific triangle within the animal
+}
+
+interface Animal {
+  id: string;        // Unique identifier, used as the ?id= query parameter
+  name: string;      // Display name (PascalCase)
+  stageWidth: number;   // ViewBox width in pixels (typically 1600)
+  stageHeight: number;  // ViewBox height in pixels (typically 900)
+  shards: Shard[];   // All triangular shards that compose this animal
+}
+
+declare const ANIMALS: Animal[];
+```
+
+### Real example — Irrawaddy Dolphin (first three shards)
+
+```javascript src/data/animalConfig.js
+export const ANIMALS = [
+  {
+    id: "irrawaddyDolphin",
+    name: "IrrawaddyDolphin",
+    stageWidth: 1600,
+    stageHeight: 900,
+    shards: [
+      {
+        clipPath:
+          "polygon(7.313% 48.222%, 7.688% 52.444%, 4.742% 54.000%, 7.313% 48.222%, 7.313% 48.222%)",
+        color: "#C0CECE",
+        order: 7,
+        shard: 1,
+      },
+      {
+        clipPath:
+          "polygon(7.875% 68.444%, 4.438% 68.444%, 5.813% 62.111%, 7.875% 68.444%, 7.875% 68.444%)",
+        color: "#798998",
+        order: 2,
+        shard: 2,
+      },
+      {
+        clipPath:
+          "polygon(5.747% 71.556%, 4.438% 68.444%, 8.000% 69.222%, 5.747% 71.556%, 5.747% 71.556%)",
+        color: "#6F828C",
+        order: 0,
+        shard: 3,
+      },
+      // ... 122 more shards
+    ],
+  },
+];
+```
+
+### Field descriptions
+
+<AccordionGroup>
+  <Accordion title="clipPath">
+    A CSS `polygon()` function string that defines the three vertices of a triangular shard as percentage coordinates relative to the stage dimensions (`stageWidth` × `stageHeight`). The polygon closes itself by repeating the first point as the last point.
+
+    ```css
+    /* Example: a small triangle near the top-left of the stage */
+    polygon(7.313% 48.222%, 7.688% 52.444%, 4.742% 54.000%, 7.313% 48.222%, 7.313% 48.222%)
+    ```
+
+    This value is applied directly as a CSS `clip-path` on a `<div>` that is sized to match the full stage, producing a triangular visible region filled with the shard's `color`.
+  </Accordion>
+
+  <Accordion title="color">
+    A hex color string applied as the background or fill color of the shard element. Colors are hand-tuned to match the reference animal illustration when all shards are composited together.
+
+    ```javascript
+    color: "#C0CECE"  // light blue-grey for a dolphin's flank
+    ```
+  </Accordion>
+
+  <Accordion title="order">
+    A non-negative integer that controls which shards appear first during the reveal animation. Shards with a lower `order` value animate into view earlier. The values are not necessarily sequential or contiguous — they encode the artistic reveal sequence (e.g. the animal's most recognizable features often appear first).
+
+    ```javascript
+    order: 0   // appears first
+    order: 7   // appears after order-0 through order-6 shards
+    order: 125 // appears last (or near last) in a 125-shard animal
+    ```
+  </Accordion>
+
+  <Accordion title="shard">
+    A 1-based integer that uniquely identifies this shard within its animal. Unlike `order`, `shard` is sequential and stable — it is used as a key or reference identifier, not for sorting. The total shard count varies by animal (the Irrawaddy Dolphin has 125 shards).
+
+    ```javascript
+    shard: 1   // first defined shard in the array
+    shard: 125 // last defined shard
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## `animalDetails.json` — conservation content
+
+This file provides the textual content rendered on the `/detail` page. Content is written in Thai.
+
+### TypeScript-style interface
+
+```typescript
+interface Topics {
+  intro: string;     // Thai label for the introduction topic tab
+  threat: string;    // Thai label for the threats topic tab
+  solution: string;  // Thai label for the solutions topic tab
+}
+
+interface AnimalContent {
+  intro: string;     // Introduction: physical description, habitat, behavior
+  threat: string;    // Threats: human activities and natural pressures
+  solution: string;  // Solutions: legal protections and rescue procedures
+}
+
+interface AnimalDetail {
+  id: string;        // Matches the id field in animalConfig.js
+  nameEN: string;    // English species name
+  nameTH: string;    // Thai species name
+  content: AnimalContent;
+}
+
+interface AnimalDetailsFile {
+  topics: Topics;    // UI labels for the three content tabs
+  animals: AnimalDetail[];
+}
+```
+
+### Real example — Leatherback Turtle (structure only)
+
+```json src/data/animalDetails.json
+{
+  "topics": {
+    "intro": "ทำความรู้จัก",
+    "threat": "ภัยคุกคาม",
+    "solution": "แนวทางการแก้ไข"
+  },
+  "animals": [
+    {
+      "id": "turtle",
+      "nameEN": "Leatherback Turtle",
+      "nameTH": "เต่ามะเฟือง",
+      "content": {
+        "intro": "...",
+        "threat": "...",
+        "solution": "..."
+      }
+    },
+    {
+      "id": "dugong",
+      "nameEN": "DUGONG",
+      "nameTH": "พะยูน",
+      "content": {
+        "intro": "...",
+        "threat": "...",
+        "solution": "..."
+      }
+    }
+  ]
+}
+```
+
+### Topics object
+
+The top-level `topics` object provides Thai-language UI labels for the three content sections displayed on the detail page:
+
+| Key | Thai value | Meaning |
+|---|---|---|
+| `intro` | `ทำความรู้จัก` | "Get to know" — species introduction |
+| `threat` | `ภัยคุกคาม` | "Threats" — endangerment causes |
+| `solution` | `แนวทางการแก้ไข` | "Solutions" — conservation and rescue guidance |
+
+### Linking the two data files
+
+The `id` field is the join key between the two files. When a user navigates to `/detail?id=turtle`, the detail page:
+
+1. Reads `id` from `window.location.search`
+2. Finds the matching entry in `ANIMALS` (from `animalConfig.js`) to render the polygon illustration
+3. Finds the matching entry in `animalDetails.json` to render the conservation text
+
+<Tip>
+Both arrays must contain an entry with a matching `id` for the detail page to render correctly. If an animal exists in `animalConfig.js` but not in `animalDetails.json` (or vice versa), the detail page will render with missing data.
+</Tip>

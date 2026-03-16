@@ -1,0 +1,199 @@
+---
+title: "Creating polygon art"
+description: "How to create and prepare low-poly artwork for a new animal in Low-Poly Ocean."
+---
+
+Each animal in Low-Poly Ocean is rendered as a collection of colored polygon triangles called **shards**. The coordinates come from an SVG file, and a small Python utility helps pre-process that SVG into three depth layers.
+
+## Overview of the workflow
+
+1. Create or source a low-poly SVG of the animal in a vector tool (e.g. Illustrator, Inkscape).
+2. Export the SVG from a single artboard with a consistent viewBox (e.g. `1600 × 900`).
+3. Run `split_layers.py` to divide the SVG paths into back, mid, and front depth layers.
+4. Convert the SVG `<path>` coordinates into the `polygon()` percentage format used by `animalConfig.js`.
+5. Use the Orderer page (`/order`) to set the animation reveal sequence for each shard.
+
+## The `split_layers.py` script
+
+The script lives at the project root and splits a single flat SVG into three files based on the order paths appear in the document.
+
+```python split_layers.py
+import re
+
+def split_svg_layers(input_path):
+    with open(input_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Extract header and footer
+    header_match = re.match(r'(<svg[^>]*>)(.*)', content, re.DOTALL)
+    if not header_match:
+        print("Could not parse SVG header")
+        return
+
+    header_tag = header_match.group(1)
+    body = content.replace(header_tag, '').replace('</svg>', '').strip()
+
+    # Split by <path self-closing tags
+    paths = re.split(r'(<path[^>]*/>)', body)
+    paths = [p for p in paths if p.strip()]
+
+    total_paths = len(paths)
+    print(f"Found approximately {total_paths} elements")
+
+    # Split into 3 chunks by proportion:
+    # Back:  0 – 35%
+    # Mid:  35 – 75%
+    # Front: 75 – 100%
+    split1 = int(total_paths * 0.35)
+    split2 = int(total_paths * 0.75)
+
+    layer_back_paths  = "".join(paths[:split1])
+    layer_mid_paths   = "".join(paths[split1:split2])
+    layer_front_paths = "".join(paths[split2:])
+
+    base_path = input_path.replace('Artboard 1.svg', '')
+
+    with open(f"{base_path}layer-1-back.svg",  'w', encoding='utf-8') as f:
+        f.write(f"{header_tag}\n{layer_back_paths}\n</svg>")
+    with open(f"{base_path}layer-2-mid.svg",   'w', encoding='utf-8') as f:
+        f.write(f"{header_tag}\n{layer_mid_paths}\n</svg>")
+    with open(f"{base_path}layer-3-front.svg", 'w', encoding='utf-8') as f:
+        f.write(f"{header_tag}\n{layer_front_paths}\n</svg>")
+
+    print("Created 3 layers successfully")
+
+split_svg_layers(r'd:\React\polygon-animals\src\assets\Artboard 1.svg')
+```
+
+### How the split works
+
+The script assumes that the order of `<path>` elements in the SVG corresponds roughly to depth (back to front), which is a common output of polygon art tools that draw shapes from background to foreground. It splits the list of paths by proportion:
+
+| Layer | File | Proportion of paths |
+|---|---|---|
+| Back | `layer-1-back.svg` | First 35% |
+| Mid | `layer-2-mid.svg` | Middle 40% |
+| Front | `layer-3-front.svg` | Last 25% |
+
+<Note>
+  The script looks for self-closing `<path ... />` elements. If your SVG exporter writes `<path ...></path>` instead, you'll need to adjust the regex on line 23.
+</Note>
+
+To run the script, update the path at the bottom of the file to point to your SVG, then execute:
+
+```bash
+python split_layers.py
+```
+
+Three new SVG files appear in the same directory as the input.
+
+## Shard data format
+
+Each polygon in the animal is stored as a shard object inside the `shards` array of an entry in `ANIMALS`.
+
+```javascript
+{
+  clipPath: "polygon(7.313% 48.222%, 7.688% 52.444%, 4.742% 54.000%, 7.313% 48.222%, 7.313% 48.222%)",
+  color: "#C0CECE",
+  order: 7,
+  shard: 1,
+}
+```
+
+### Fields
+
+**`clipPath`**
+
+A CSS `polygon()` function where every coordinate is expressed as a percentage of the stage dimensions (`stageWidth` × `stageHeight`). The polygon is closed by repeating the first point at the end.
+
+To convert an absolute SVG coordinate `(x, y)` to a percentage:
+```
+x% = (x / stageWidth)  × 100
+y% = (y / stageHeight) × 100
+```
+
+For example, for a stage of `1600 × 900`, an SVG point at `(117, 433)` becomes:
+```
+x% = (117 / 1600) × 100 = 7.313%
+y% = (433 / 900)  × 100 = 48.111%
+```
+
+**`color`**
+
+The fill color of the polygon, as a hex string (e.g. `"#C0CECE"`). Sample your color directly from the low-poly artwork — each triangle should have a flat, single color.
+
+**`order`**
+
+A non-negative integer that determines when this shard appears during the reveal animation. `0` is first, with increasing values appearing progressively later. The animation engine normalizes the `order` values into a 0-to-N rank sequence, so gaps in numbering are allowed.
+
+**`shard`**
+
+A 1-based sequential index for this shard within the animal. The value is used by the export format produced by the Orderer page.
+
+### Minimal complete example
+
+```javascript
+{
+  id: "exampleFish",
+  name: "ExampleFish",
+  stageWidth: 1600,
+  stageHeight: 900,
+  shards: [
+    {
+      clipPath: "polygon(10.000% 20.000%, 15.000% 30.000%, 5.000% 30.000%, 10.000% 20.000%, 10.000% 20.000%)",
+      color: "#4A90D9",
+      order: 0,
+      shard: 1,
+    },
+    {
+      clipPath: "polygon(15.000% 30.000%, 20.000% 40.000%, 10.000% 40.000%, 15.000% 30.000%, 15.000% 30.000%)",
+      color: "#357ABD",
+      order: 1,
+      shard: 2,
+    },
+    // ... more shards
+  ],
+}
+```
+
+## The Orderer page (`/order`)
+
+The Orderer page is an internal development tool built into the app at the `/order` route. It lets you visually assign the `order` value to every shard by clicking them in the sequence you want them to animate in.
+
+### Workflow
+
+1. Run the dev server and navigate to `http://localhost:5173/order`.
+2. Use **Prev** / **Next Animal** to select the animal you want to order.
+3. Click **Show Numbers** to enable the label overlay.
+4. Click each shard in the order you want it to appear — the first shard you click gets `order: 0`, the second gets `order: 1`, and so on. A progress bar at the top tracks how many shards you've marked.
+5. When you've clicked every shard, the tool automatically downloads a `.js` file named `<animalId>Ordered.js`.
+6. Copy the `shards` array from the downloaded file back into `animalConfig.js`.
+
+### Controls
+
+| Button | Action |
+|---|---|
+| **Show Numbers** | Toggles numeric labels on each shard showing its current mark sequence. |
+| **Reset** | Clears all marks and starts the ordering over. |
+| **Export** | Manually triggers the download of the current order without waiting for completion. |
+| **Prev / Next Animal** | Switches between animals in the `ANIMALS` array. Switching resets marks. |
+
+<Info>
+  The Orderer page zooms in up to 2.5× when **Show Numbers** is active, and the view follows your cursor. This makes it easier to click small shards accurately.
+</Info>
+
+## `stageWidth` and `stageHeight`
+
+These two values on each animal entry record the pixel dimensions of the SVG viewBox used when the coordinates were calculated. They serve as the normalization reference so that `clipPath` percentages map correctly to the rendered stage size.
+
+Always set `stageWidth` and `stageHeight` to match the `width` and `height` (or `viewBox`) of the SVG you used as your source. The existing animals all use `1600 × 900`.
+
+```javascript
+{
+  id: "irrawaddyDolphin",
+  name: "IrrawaddyDolphin",
+  stageWidth: 1600,  // matches SVG viewBox width
+  stageHeight: 900,  // matches SVG viewBox height
+  shards: [ /* ... */ ],
+}
+```

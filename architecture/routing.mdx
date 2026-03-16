@@ -1,0 +1,111 @@
+---
+title: Routing
+description: Every route in Low-Poly Ocean, how the BrowserRouter is set up in main.jsx, and how navigation between the three stages works.
+---
+
+Low-Poly Ocean uses React Router v7 with `BrowserRouter` for client-side routing. All routes are defined in `src/main.jsx`, which is the application entry point.
+
+## Router setup
+
+The full router configuration from `src/main.jsx`:
+
+```jsx src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import OrdererPage from "./pages/OrdererPage.jsx";
+import Landing from "./pages/Landing.jsx";
+import PolygonPage from "./pages/PolygonPage.jsx";
+import DetailPage from "./pages/DetailPage.jsx";
+import Stages from "./pages/Stages.jsx";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/stages" replace />} />
+        <Route path="/detail" element={<DetailPage />} />
+        <Route path="/order" element={<OrdererPage />} />
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/stages" element={<Stages />} />
+        <Route path="/polygon" element={<PolygonPage />} />
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>,
+);
+```
+
+## Route reference
+
+| Path | Component | Role |
+|---|---|---|
+| `/` | `<Navigate to="/stages" replace />` | Redirects to the ocean explorer. The `replace` flag prevents a back-button loop. |
+| `/stages` | `Stages` | **Primary entry point.** Ocean explorer displaying all 10 animals. |
+| `/landing` | `Landing` | Intro/landing screen shown before the main experience. |
+| `/detail` | `DetailPage` | Animal detail view. Reads animal identity from the `id` query parameter. |
+| `/polygon` | `PolygonPage` | Explains the low-poly art concept. Third stage of the journey. |
+| `/order` | `OrdererPage` | Internal utility for managing shard render order. Not part of the main user flow. |
+
+## URL parameters
+
+### `/detail?id=<animalId>`
+
+The detail page does not use a URL segment parameter (`:id`). Instead it reads the animal identity from the `id` **query parameter**.
+
+```text
+/detail?id=irrawaddyDolphin
+/detail?id=turtle
+/detail?id=dugong
+```
+
+The `id` value must match the `id` field of an entry in the `ANIMALS` array exported from `src/data/animalConfig.js`. The same `id` is used to look up the animal's content in `animalDetails.json`.
+
+Valid animal IDs (from `animalConfig.js` and `animalDetails.json`):
+
+| ID | English name |
+|---|---|
+| `irrawaddyDolphin` | Irrawaddy Dolphin |
+| `dolphin` | Indo-Pacific Humpback Dolphin (Pink Dolphin) |
+| `stingray` | Stingray |
+| `turtle` | Leatherback Turtle |
+| `dugong` | Dugong |
+| `orca` | Orca (Killer Whale) |
+| `blueWhale` | Blue Whale |
+
+<Warning>
+Passing an `id` that does not exist in `animalConfig.js` will cause the detail page to render without animal data. There is no built-in 404 redirect for invalid animal IDs.
+</Warning>
+
+## Navigation between stages
+
+The intended user journey moves forward through three stages:
+
+```text
+/stages
+  └─ user selects an animal
+        ↓
+/detail?id=<animalId>
+  └─ user finishes reading
+        ↓
+/polygon
+```
+
+Navigation is triggered programmatically using React Router's `useNavigate` hook (or `<Link>` components) inside each page component. The browser's back button works normally because `BrowserRouter` tracks history entries.
+
+## Deployment and SPA fallback
+
+Because routing is handled entirely in the browser, any direct URL (e.g. `/detail?id=turtle`) returns a 404 from the file server unless you configure a catch-all rewrite. The included `vercel.json` handles this for Vercel deployments:
+
+```json vercel.json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+For other hosts, configure an equivalent fallback to `index.html` for all non-asset requests.

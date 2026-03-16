@@ -1,0 +1,74 @@
+---
+title: "Marine animals overview"
+description: "An introduction to the 10 endangered Thai marine species featured in the Low-Poly Ocean interactive experience."
+---
+
+Low-Poly Ocean showcases **10 endangered marine species** found in Thai waters, each rendered as a low-polygon art piece composed of dozens to hundreds of triangular shards. The project is built with React and Vite, and uses an interactive detail page at `/detail?id=<animalId>` where you can explore each species' polygon artwork alongside conservation information.
+
+The species range from the massive blue whale — made up of 433 polygon shards — to the relatively compact pink dolphin rendered in 94 shards. Every animal has its own unique color palette and geometry that reflects its real-world appearance.
+
+## All 10 featured species
+
+| English name | Thai name | Animal ID | Shards | Stage dimensions |
+|---|---|---|---|---|
+| Irrawaddy Dolphin | โลมาอิรวดี | `irrawaddyDolphin` | 125 | 1600 × 900 |
+| Pink Dolphin (Indo-Pacific Humpback Dolphin) | โลมาชมพู | `dolphin` | 94 | 1600 × 900 |
+| Giant Manta Ray | กระเบนราหูยักษ์ | `stingray` | 251 | 1600 × 900 |
+| Dugong | พะยูน | `dugong` | 130 | 1600 × 900 |
+| Leatherback Turtle | เต่ามะเฟือง | `turtle` | 157 | 1600 × 900 |
+| Orca (Killer Whale) | วาฬเพชฌฆาต | `orca` | 100 | 1600 × 900 |
+| Blue Whale | วาฬสีน้ำเงิน | `blueWhale` | 433 | 1600 × 900 |
+| Sperm Whale | วาฬหัวทุย | `spermWhale` | 122 | 1600 × 900 |
+| Bowmouth Guitarfish (Ronin) | ปลาโรนิน | `ronin` | 372 | 1600 × 900 |
+| Giant Sawfish | ปลาฉนากยักษ์ | `sawfishes` | 196 | 1600 × 900 |
+
+## Conservation context
+
+Thailand's marine ecosystems — spanning the Gulf of Thailand and the Andaman Sea — are home to remarkable biodiversity, but human activity and environmental degradation have placed many species under serious threat.
+
+The key threats faced by these species include:
+
+- **Bycatch** — Accidental entanglement in fishing nets, trawls, and longlines is the leading cause of injury and death for most of the featured species.
+- **Illegal fishing** — Blast fishing, poison fishing, and the use of prohibited gear in protected zones devastate entire local populations.
+- **Marine debris and pollution** — Floating plastic bags are mistaken for jellyfish and ingested by sea turtles and dugongs. Chemical runoff and wastewater accumulate toxins through the food chain.
+- **Coastal development** — Construction along shorelines destroys nesting beaches and feeding grounds, and physical barriers such as erosion-control bamboo walls trap animals during low tides.
+- **Noise pollution** — Sonar and seismic surveys for petroleum exploration disrupt the echolocation and navigation of cetaceans, sometimes triggering mass strandings.
+- **Vessel strikes** — Propeller injuries are a documented cause of death for sea turtles, dugongs, and cetaceans that surface near boat traffic.
+- **Wildlife trade** — High-value body parts — sawfish rostra, manta ray gill rakers, ronin head spines, sea turtle eggs — drive targeted poaching.
+
+All 10 species are protected under Thai law (the Wildlife Conservation and Protection Act B.E. 2562 and its predecessors), and several are listed on CITES Appendix I, which prohibits international commercial trade. Despite these protections, enforcement gaps and low reproduction rates make recovery slow.
+
+## Browse individual species
+
+<CardGroup cols={2}>
+  <Card title="Irrawaddy Dolphin" icon="fish" href="/animals/irrawaddy-dolphin">
+    โลมาอิรวดี · 125 shards · `irrawaddyDolphin`
+  </Card>
+  <Card title="Pink Dolphin" icon="fish" href="/animals/dolphin">
+    โลมาชมพู · 94 shards · `dolphin`
+  </Card>
+  <Card title="Giant Manta Ray" icon="fish" href="/animals/stingray">
+    กระเบนราหูยักษ์ · 251 shards · `stingray`
+  </Card>
+  <Card title="Dugong" icon="fish" href="/animals/dugong">
+    พะยูน · 130 shards · `dugong`
+  </Card>
+  <Card title="Leatherback Turtle" icon="turtle" href="/animals/turtle">
+    เต่ามะเฟือง · 157 shards · `turtle`
+  </Card>
+  <Card title="Orca" icon="fish" href="/animals/orca">
+    วาฬเพชฌฆาต · 100 shards · `orca`
+  </Card>
+  <Card title="Blue Whale" icon="fish" href="/animals/blue-whale">
+    วาฬสีน้ำเงิน · 433 shards · `blueWhale`
+  </Card>
+  <Card title="Sperm Whale" icon="fish" href="/animals/sperm-whale">
+    วาฬหัวทุย · 122 shards · `spermWhale`
+  </Card>
+  <Card title="Bowmouth Guitarfish" icon="fish" href="/animals/ronin">
+    ปลาโรนิน · 372 shards · `ronin`
+  </Card>
+  <Card title="Giant Sawfish" icon="fish" href="/animals/sawfishes">
+    ปลาฉนากยักษ์ · 196 shards · `sawfishes`
+  </Card>
+</CardGroup>

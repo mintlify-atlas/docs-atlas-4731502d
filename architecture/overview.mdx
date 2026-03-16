@@ -1,0 +1,85 @@
+---
+title: Architecture overview
+description: How Low-Poly Ocean is structured — its folder layout, three-page flow, and how animal data reaches the UI.
+---
+
+Low-Poly Ocean is a single-page React application with no back end. All routing is handled client-side by React Router, and all animal data lives in two static files in `src/data/`.
+
+## Project structure
+
+```text
+polygon-animals/
+├── public/                  # Static assets served verbatim
+├── src/
+│   ├── assets/              # Images and other binary assets
+│   ├── components/          # Shared UI components
+│   ├── data/
+│   │   ├── animalConfig.js  # ANIMALS array: shard geometry and colors
+│   │   └── animalDetails.json  # Conservation text per animal
+│   ├── images/              # Additional image resources
+│   ├── pages/               # One file per route
+│   ├── utils/               # Shared utility functions
+│   ├── index.css            # Global styles
+│   └── main.jsx             # App entry point and route definitions
+├── index.html
+├── vite.config.js
+├── vercel.json
+└── package.json
+```
+
+## Directory reference
+
+| Path | Purpose |
+|---|---|
+| `src/main.jsx` | Mounts the React root, defines all `<Route>` entries inside `<BrowserRouter>` |
+| `src/pages/Stages.jsx` | Ocean explorer — the entry point of the user journey |
+| `src/pages/Landing.jsx` | Landing / intro screen |
+| `src/pages/DetailPage.jsx` | Animal detail view, reads `?id` from the URL |
+| `src/pages/PolygonPage.jsx` | Explains the low-poly aesthetic |
+| `src/pages/OrdererPage.jsx` | Internal utility for shard ordering |
+| `src/pages/Intro1.jsx` | First intro animation page |
+| `src/pages/Intro2.jsx` | Second intro animation page |
+| `src/components/AnimalCard.jsx` | Card component used in the stages overview |
+| `src/components/PreviewStage.jsx` | Renders a low-poly animal preview |
+| `src/components/UnderwaterEnvironment.jsx` | Three.js/R3F underwater scene |
+| `src/components/SoundController.jsx` | Ambient audio toggle |
+| `src/components/BackToTop.jsx` | Scroll-to-top utility |
+| `src/components/Button.jsx` | Reusable button component |
+| `src/data/animalConfig.js` | Exports the `ANIMALS` array with shard geometry |
+| `src/data/animalDetails.json` | Conservation content for each animal (Thai text) |
+| `src/utils/` | Helper functions shared across pages |
+| `vite.config.js` | Vite build configuration with `@vitejs/plugin-react` |
+| `vercel.json` | SPA rewrite rule for Vercel deployment |
+
+## Application flow
+
+The three main pages form a sequential user journey:
+
+```text
+/stages  →  /detail?id=<animalId>  →  /polygon
+ (1)               (2)                    (3)
+```
+
+1. **Ocean Explorer (`/stages`)** — An animated ocean canvas displays all 10 animals as low-poly illustrations. Selecting an animal navigates to the detail view.
+2. **Animal Detail (`/detail`)** — The detail page reads the `id` query parameter, looks up the matching entry in both `animalConfig.js` and `animalDetails.json`, and renders the full conservation profile across three topics.
+3. **Why Polygon? (`/polygon`)** — A closing screen that explains the artistic and educational rationale behind the low-poly style.
+
+## Data flow
+
+Animal data originates in two source files and flows through the component tree without any external API calls:
+
+```text
+src/data/animalConfig.js       →  Shard geometry (clipPath, color, order)
+          +
+src/data/animalDetails.json    →  Conservation text (intro, threat, solution)
+          ↓
+     DetailPage.jsx             reads both sources by matching animal id
+          ↓
+     AnimalCard / PreviewStage  renders the polygon illustration
+```
+
+`animalConfig.js` is imported as an ES module wherever polygon rendering is needed. `animalDetails.json` is imported as a static JSON asset. Both are bundled into the client by Vite at build time — there are no runtime network requests for animal data.
+
+<Note>
+Because all data is bundled statically, adding a new animal requires editing both `animalConfig.js` (to add shard geometry) and `animalDetails.json` (to add conservation text), then rebuilding.
+</Note>

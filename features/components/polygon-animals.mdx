@@ -1,0 +1,130 @@
+---
+title: "Polygon animals"
+description: "How each marine animal is stored as a list of CSS clip-path shards and rendered as an absolutely-positioned polygon mosaic."
+---
+
+Every animal in the app is represented as a flat array of shard objects stored in `src/data/animalConfig.js`. There is no SVG or image file — each shape is built entirely from overlapping `<div>` elements clipped into triangles.
+
+## Shard data structure
+
+Each item in a `shards` array has the following fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `clipPath` | `string` | A CSS `polygon()` value using `%` coordinates relative to the wrapper element |
+| `color` | `string` | Hex color for this triangle face |
+| `order` | `number` | Assembly order — shards with lower `order` values animate into position first |
+| `shard` | `number` | Human-readable shard index (1-based), used during authoring |
+
+Each animal object also declares `stageWidth` and `stageHeight` (the viewBox dimensions used when the shards were authored), which are used in `DetailPage.jsx` to maintain the correct aspect ratio.
+
+## Real shard example
+
+The first three shards of `irrawaddyDolphin`:
+
+```javascript
+// src/data/animalConfig.js
+{
+  id: "irrawaddyDolphin",
+  name: "IrrawaddyDolphin",
+  stageWidth: 1600,
+  stageHeight: 900,
+  shards: [
+    {
+      clipPath:
+        "polygon(7.313% 48.222%, 7.688% 52.444%, 4.742% 54.000%, 7.313% 48.222%, 7.313% 48.222%)",
+      color: "#C0CECE",
+      order: 7,
+      shard: 1,
+    },
+    {
+      clipPath:
+        "polygon(7.875% 68.444%, 4.438% 68.444%, 5.813% 62.111%, 7.875% 68.444%, 7.875% 68.444%)",
+      color: "#798998",
+      order: 2,
+      shard: 2,
+    },
+    {
+      clipPath:
+        "polygon(5.747% 71.556%, 4.438% 68.444%, 8.000% 69.222%, 5.747% 71.556%, 5.747% 71.556%)",
+      color: "#6F828C",
+      order: 0,
+      shard: 3,
+    },
+    // ...
+  ],
+}
+```
+
+## How CSS clip-path creates triangles
+
+Each shard div occupies the full `width: 100%; height: 100%` of its wrapper and is clipped to a triangular region using `clip-path: polygon()`:
+
+```css
+/* Conceptual example of what a shard renders to */
+div.shard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(7.313% 48.222%, 7.688% 52.444%, 4.742% 54.000%);
+  background-color: #C0CECE;
+}
+```
+
+The three `x% y%` pairs in the `polygon()` function are percentage coordinates relative to the wrapper's bounding box. Because every shard div is the same size as the wrapper and only the visible triangle region differs, the shards naturally align to form a seamless mosaic when stacked.
+
+<Note>
+  CSS `polygon()` allows more than three points; the irrawaddy dolphin shards repeat the first point as the fourth and fifth to close the path cleanly, but visually the shape is always a triangle.
+</Note>
+
+## How shards are rendered
+
+In `Landing.jsx`, each animal is rendered by finding its config from `ANIMALS` and mapping over its `shards` array:
+
+```jsx
+// Landing.jsx — shard rendering pattern
+<div className="irrawaddy-wrapper-v2">
+  {ANIMALS.find((a) => a.id === "irrawaddyDolphin")?.shards.map(
+    (shard, index) => (
+      <div
+        key={index}
+        className="shard"
+        style={{
+          clipPath: shard.clipPath,
+          backgroundColor: shard.color,
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      />
+    ),
+  )}
+</div>
+```
+
+The wrapper element (`irrawaddy-wrapper-v2`, `turtle-wrapper-v2`, etc.) sets the canvas size via CSS. Because all shards are `position: absolute` with `top: 0; left: 0`, they all paint on top of each other and the clip-paths reveal only their respective triangular portions.
+
+## Shimmer effect
+
+In `DetailPage.jsx`, after the shard assembly animation finishes, the `shimmer-ready` class is added to every shard div:
+
+```jsx
+<div
+  key={index}
+  className={`shard ${shimmerReady ? "shimmer-ready" : ""}`}
+  style={{
+    clipPath: currentClipPath,
+    backgroundColor: currentColor,
+    // ...
+    "--shimmer-delay": `${Math.floor(rank / batchSize) * 0.1}s`,
+  }}
+/>
+```
+
+The `--shimmer-delay` CSS custom property staggers the shimmer sweep in batches of `batchSize = Math.max(1, Math.round(totalShards * 0.015))` shards. This creates a wave-like shimmer rather than every shard flashing simultaneously.
+
+In `Landing.jsx` the static render does not apply `shimmer-ready` — the shimmer is exclusive to the assembly animation in `DetailPage`.

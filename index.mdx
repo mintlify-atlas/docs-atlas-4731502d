@@ -1,97 +1,76 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Low-Poly Ocean"
+description: "An interactive educational web experience using low-poly polygon art to showcase 10 endangered Thai marine animals — exploring their biology, threats, and conservation solutions."
 ---
 
-## Setting up
-
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Run the project locally in under 5 minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
+    Understand how the app is structured.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Marine Animals" icon="fish" href="/animals/overview">
+    Explore all 10 endangered species featured.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Add an Animal" icon="plus" href="/development/adding-animals">
+    Contribute a new polygon animal to the experience.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What is Low-Poly Ocean?
 
-Everything you need to create world-class documentation.
+Low-Poly Ocean is an immersive, scroll-driven web experience that uses **polygon (low-poly) art** to tell the story of 10 endangered marine animals found in Thai waters. Each animal is rendered as a mosaic of triangular shards that assemble before your eyes — a visual metaphor for how ecosystems shatter when a species disappears.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+The project is built with **React 19**, **Framer Motion**, and **Three.js**, and is deployed as a static site via Vercel. Content is written in Thai and covers three topics for each animal: an introduction to the species, the threats it faces, and conservation solutions.
 
-## Need inspiration?
+## Three Stages
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+The experience is organized into three stages that users can explore in order:
+
+<CardGroup cols={3}>
+  <Card title="1. Ocean Explorer" icon="water" href="/features/ocean-explorer">
+    A parallax scroll scene featuring all 10 animals swimming through the ocean depths.
+  </Card>
+  <Card title="2. Animal Detail" icon="magnifying-glass" href="/features/animal-detail">
+    Deep-dive into each species with animated polygon assembly and tabbed content panels.
+  </Card>
+  <Card title="3. Why Polygon?" icon="shapes" href="/features/why-polygon">
+    A horizontal-scroll explainer scene explaining the artistic and philosophical intent.
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<AccordionGroup>
+  <Accordion title="Low-poly polygon art system">
+    Each animal is defined as an array of triangular shards in `src/data/animalConfig.js`. Every shard has a `clipPath` (polygon coordinates as percentages), a `color`, and an `order` value that controls assembly sequence. The system supports hundreds of shards per animal for high-fidelity artwork.
+  </Accordion>
+  <Accordion title="Animated shard assembly">
+    On the Detail page, shards fly in from scattered positions and snap into place with staggered CSS transitions. The total assembly time is normalized to ~1.25 seconds regardless of how many shards an animal has.
+  </Accordion>
+  <Accordion title="Parallax scrolling ocean">
+    The Ocean Explorer page uses Framer Motion's `useScroll` and `useTransform` hooks to drive per-element parallax. Animals enter from off-screen, drift through the viewport, and fade out — creating a sense of depth and motion.
+  </Accordion>
+  <Accordion title="Three.js underwater environment">
+    A `UnderwaterEnvironment` component renders a real-time 3D background using `@react-three/fiber` and `@react-three/drei`, complete with caustic light effects.
+  </Accordion>
+  <Accordion title="Ambient ocean soundscape">
+    A `SoundController` component manages background audio with user-controlled play/pause toggle, respecting browser autoplay policies.
+  </Accordion>
+  <Accordion title="Responsive design">
+    All pages adapt to mobile viewports. The Stages hub uses a tap-to-preview interaction on small screens. The depth indicator and scroll scrubber are optimized for touch.
+  </Accordion>
+</AccordionGroup>
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 |
+| Build tool | Vite 7 |
+| Animation | Framer Motion 12 |
+| 3D rendering | Three.js + @react-three/fiber |
+| Routing | React Router DOM 7 |
+| Styling | CSS Modules (per-page) |
+| Deployment | Vercel |

@@ -1,0 +1,123 @@
+---
+title: "Adding a new animal"
+description: "Step-by-step guide to adding a new polygon animal to the Low-Poly Ocean experience."
+---
+
+Each animal in Low-Poly Ocean consists of three parts that must be created together: the polygon shard data in `animalConfig.js`, the descriptive text in `animalDetails.json`, and a section in `Landing.jsx` that displays the animal on the scrolling ocean page.
+
+<Steps>
+  <Step title="Create the polygon art">
+    Before writing any code, you need the shard data for your animal. Follow the process described in [Creating polygon art](/development/polygon-art) to produce a complete `shards` array with `clipPath`, `color`, `order`, and `shard` fields for every polygon.
+
+    Record the `stageWidth` and `stageHeight` values from the SVG viewBox you used — you'll need them in the next step.
+  </Step>
+
+  <Step title="Add the animal to animalConfig.js">
+    Open `src/data/animalConfig.js` and add a new entry to the `ANIMALS` array. Each entry requires the following fields:
+
+    ```javascript src/data/animalConfig.js
+    export const ANIMALS = [
+      // ... existing animals
+      {
+        id: "sawfish",          // unique camelCase identifier
+        name: "Sawfish",        // display name used in the Orderer tool
+        stageWidth: 1600,       // SVG viewBox width
+        stageHeight: 900,       // SVG viewBox height
+        shards: [
+          {
+            clipPath:
+              "polygon(7.313% 48.222%, 7.688% 52.444%, 4.742% 54.000%, 7.313% 48.222%, 7.313% 48.222%)",
+            color: "#C0CECE",
+            order: 7,
+            shard: 1,
+          },
+          // ... more shards
+        ],
+      },
+    ];
+    ```
+
+    **Field reference**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `id` | `string` | Unique camelCase key. Used as the URL query parameter (`/detail?id=sawfish`) and to look up data in `animalDetails.json`. |
+    | `name` | `string` | Human-readable label shown in the Orderer tool. |
+    | `stageWidth` | `number` | Width of the SVG viewBox the coordinates were designed against. |
+    | `stageHeight` | `number` | Height of the SVG viewBox the coordinates were designed against. |
+    | `shards` | `array` | Array of shard objects — one per polygon triangle in the art. |
+
+    **Shard field reference**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `clipPath` | `string` | CSS `polygon()` value using percentage coordinates relative to the stage. |
+    | `color` | `string` | Hex color of this polygon. |
+    | `order` | `number` | Animation reveal order. `0` appears first; higher values appear later. |
+    | `shard` | `number` | Sequential index of this shard within the animal (1-based). |
+
+    <Tip>
+      All animals in the `ANIMALS` array must have the same number of shards for the animation pool to work correctly. If your new animal has a different count, pad shorter arrays or ensure the Orderer tool has accounted for the difference.
+    </Tip>
+  </Step>
+
+  <Step title="Add content to animalDetails.json">
+    Open `src/data/animalDetails.json` and add a new entry to the `animals` array.
+
+    ```json src/data/animalDetails.json
+    {
+      "animals": [
+        {
+          "id": "sawfish",
+          "nameEN": "Sawfish",
+          "nameTH": "ปลาฉนาก",
+          "content": {
+            "intro": "Brief introduction to the animal...",
+            "threat": "Description of threats facing the species...",
+            "solution": "Conservation efforts and solutions..."
+          }
+        }
+      ]
+    }
+    ```
+
+    The `id` field must exactly match the `id` you used in `animalConfig.js`. The `Landing.jsx` component looks up details using `ANIMAL_DETAILS.animals.find((a) => a.id === animalId)`, so a mismatch will cause the info box to render nothing.
+
+    The three `content` keys (`intro`, `threat`, `solution`) correspond to the tabs shown on the animal detail page.
+  </Step>
+
+  <Step title="Add a section to Landing.jsx">
+    Open `src/pages/Landing.jsx` and add an `<AnimalInfoBox>` component in the appropriate scroll section.
+
+    The `AnimalInfoBox` component is already defined at the top of `Landing.jsx`. It accepts:
+
+    | Prop | Type | Description |
+    |---|---|---|
+    | `animalId` | `string` | The `id` from `animalConfig.js`. |
+    | `align` | `"left"` \| `"right"` | Which side of the screen the box appears on. |
+    | `isOpaque` | `boolean` | When `true`, gives the box a solid background instead of a translucent one. |
+
+    Add it inside a scroll section:
+
+    ```jsx src/pages/Landing.jsx
+    <section className="section-sawfish-v2">
+      {/* background scene image or parallax element here */}
+      <AnimalInfoBox animalId="sawfish" align="right" />
+    </section>
+    ```
+
+    Style the new section in `Landing.css` to control its height, background, and position within the scroll sequence.
+  </Step>
+
+  <Step title="Test on the detail page">
+    Start the dev server and visit `/detail?id=sawfish` (replacing `sawfish` with your animal's `id`). Verify:
+
+    - The polygon art assembles correctly with the reveal animation.
+    - All three content tabs (intro, threat, solution) display the text you added.
+    - The info box appears on the Landing scroll page at the expected scroll position.
+
+    <Note>
+      If the detail page shows no animal or the wrong one, double-check that the `id` value matches exactly in both `animalConfig.js` and `animalDetails.json`.
+    </Note>
+  </Step>
+</Steps>

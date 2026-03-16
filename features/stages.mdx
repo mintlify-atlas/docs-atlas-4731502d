@@ -1,0 +1,109 @@
+---
+title: "Stages hub"
+description: "The /stages route is the entry point and navigation hub for the Low-Poly Ocean experience, presenting three themed journeys the user can enter."
+---
+
+The `/stages` route is the first page a user lands on after the intro sequence. It renders three full-height panels side by side, each representing a distinct journey through the app.
+
+## Intro sequence
+
+When a user visits `/stages` for the first time in a session, they see a two-step animated intro before the hub is revealed.
+
+<Steps>
+  <Step title="Intro1">
+    The first intro screen plays. When the user dismisses it, `introStep` advances from `1` to `2`.
+  </Step>
+  <Step title="Intro2">
+    The second intro screen plays. Dismissing it sets `introStep` to `0`, which reveals the main stages hub and marks `hasSeenIntroGlobal = true`.
+  </Step>
+  <Step title="Stages hub">
+    The three stage panels are now interactive. `hasSeenIntroGlobal` stays `true` for the rest of the browser session, so revisiting `/stages` skips straight to the hub.
+  </Step>
+</Steps>
+
+### `hasSeenIntroGlobal` flag
+
+`hasSeenIntroGlobal` is a module-level variable in `Stages.jsx`:
+
+```javascript
+let hasSeenIntroGlobal = false;
+```
+
+Because it lives outside the component, it survives re-renders and React Router navigations within the same session. It resets only when the page is hard-reloaded.
+
+A route can also bypass the intro by passing `{ state: { skipIntro: true } }` to `useNavigate`. Both the landing page back button and the detail page back link use this pattern:
+
+```jsx
+navigate("/stages", { state: { skipIntro: true } })
+```
+
+## The three stages
+
+| # | Title (Thai) | Route | CSS background class |
+|---|---|---|---|
+| 1 | สำรวจท้องทะเล | `/landing` | `bg-research` |
+| 2 | รายละเอียด | `/detail` | `bg-detail` |
+| 3 | ทำไมต้อง Polygon | `/polygon` | `yPolygon` |
+
+### Source: `stagesData` array
+
+```javascript
+const stagesData = [
+  {
+    id: 1,
+    title: "สำรวจท้องทะเล",
+    subtitle:
+      "ร่วมสำรวจและทำความรู้จักกับเหล่า 10 สัตว์ทะเลหายากที่ใกล้สูญพันธุ์ หรือบางชนิดก็หาไม่ได้แล้ว เพื่อเรียนรู้ว่าทำไมการมีอยู่ของพวกมันถึงมีความหมายต่อโลกใบนี้",
+    bgClass: "bg-research",
+    route: "/landing",
+  },
+  {
+    id: 2,
+    title: "รายละเอียด",
+    subtitle: "เจาะลึกข้อมูลเชิงลึกของแต่ละสายพันธุ์ที่น่าสนใจ",
+    bgClass: "bg-detail",
+    route: "/detail",
+  },
+  {
+    id: 3,
+    title: "ทำไมต้อง Polygon",
+    subtitle:
+      "เข้าใจว่าทำไม Polygon ถึงเป็นเครื่องมือที่ดีที่สุดสำหรับการอนุรักษ์",
+    bgClass: "yPolygon",
+    route: "/polygon",
+  },
+];
+```
+
+## Interaction model
+
+The component detects whether the current viewport is mobile (≤ 768 px) and applies different tap/click behavior accordingly.
+
+### Desktop
+
+A single click on any stage panel immediately navigates to that stage's route.
+
+- `onMouseEnter` sets the panel as `activeTab`, which triggers the CSS hover/expand state.
+- `onClick` calls `navigate(stage.route)` directly.
+
+### Mobile
+
+Mobile uses a two-tap pattern to prevent accidental navigation:
+
+1. **First tap** — sets `mobileSelected` to the tapped stage ID. A full-screen preview overlay slides in showing the stage number, title, subtitle, and a "เข้าสู่เส้นทางนี้ →" button.
+2. **Second tap** (on the overlay or its button) — navigates to the stage route.
+3. The **✕ button** on the overlay clears `mobileSelected` without navigating.
+
+```jsx
+const handleTabClick = (stage) => {
+  if (isMobile) {
+    if (mobileSelected === stage.id) {
+      if (stage.route) navigate(stage.route);
+    } else {
+      setMobileSelected(stage.id);
+    }
+  } else {
+    if (stage.route) navigate(stage.route);
+  }
+};
+```

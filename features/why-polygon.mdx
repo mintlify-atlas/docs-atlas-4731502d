@@ -1,0 +1,141 @@
+---
+title: "Why Polygon?"
+description: "The /polygon route is a horizontal parallax explainer that uses layered imagery, an animated orca jump, and a polar bear slide-in to explain the artistic and conservation philosophy behind the project."
+---
+
+The `/polygon` route converts vertical scroll into horizontal camera movement through a wide panoramic scene. Three image layers move at different speeds to create depth. Two animated characters — a jumping orca and a sliding polar bear — punctuate the journey with conservation messages.
+
+## Three-layer parallax system
+
+The horizontal travel of each layer is derived from `travelDistance`, the number of pixels the widest layer extends beyond the viewport:
+
+```javascript
+const travelDistance = Math.max(0, maxWidth - viewportWidth);
+```
+
+Each layer then multiplies that distance by a depth factor:
+
+| Layer | Depth factor | Framer Motion transform |
+|---|---|---|
+| Bottom (farthest) | 0.7× | `[0, -travelDistance * 0.7]` |
+| Middle | 0.85× | `[0, -travelDistance * 0.85]` |
+| Top (nearest) | 1.0× | `[0, -travelDistance]` |
+
+```javascript
+// PolygonPage.jsx
+const bgXBottom = useTransform(smoothProgress, [0, 1], [0, -travelDistance * 0.7]);
+const bgXMiddle = useTransform(smoothProgress, [0, 1], [0, -travelDistance * 0.85]);
+const bgXTop    = useTransform(smoothProgress, [0, 1], [0, -travelDistance]);
+```
+
+The scroll spring uses slightly different settings than `Landing.jsx` to give the horizontal scene a heavier, more cinematic feel:
+
+```javascript
+const smoothProgress = useSpring(scrollYProgress, {
+  stiffness: 60,  // reduced for more weight
+  damping: 35,    // increased for smoothness
+  restDelta: 0.001,
+});
+```
+
+## Orca jump animation
+
+The orca is absolutely positioned and driven by three independent transform values keyed to `smoothProgress`:
+
+### Vertical jump (`orcaJumpY`)
+
+```javascript
+const orcaJumpY = useTransform(
+  smoothProgress,
+  [0.3, 0.45, 0.6, 0.75, 0.85],
+  [650, 100, -30, 100, 650],
+);
+```
+
+The orca starts below the scene (`650`), crests above the waterline (`-30`) at the midpoint, and returns below (`650`) by 0.85.
+
+### Rotation (`orcaRotate`)
+
+```javascript
+const orcaRotate = useTransform(
+  smoothProgress,
+  [0.3, 0.45, 0.6, 0.75, 0.85],
+  [50, 60, 0, -60, -85],
+);
+```
+
+The orca tilts forward on the way up and rotates back on the way down, mimicking a natural breach arc.
+
+### Horizontal position (`orcaX`)
+
+```javascript
+const baseOrcaXStart = maxWidth * 0.6;
+const baseOrcaXEnd   = -travelDistance * 0.85 + baseOrcaXStart;
+
+const orcaX = useTransform(
+  smoothProgress,
+  [0, 0.3, 0.6, 0.85, 1],
+  [
+    baseOrcaXStart,
+    baseOrcaXStart - travelDistance * 0.15,
+    baseOrcaXStart - travelDistance * 0.8,
+    baseOrcaXStart - travelDistance * 1.5,
+    baseOrcaXEnd,
+  ],
+);
+```
+
+The orca travels horizontally in sync with the middle layer, so it appears to leap out of and back into the scene naturally.
+
+### Orca message
+
+A conservation message floats near the orca during the jump (progress 0.4–0.82), synced to the middle layer's `x` position:
+
+> "หัวใจหลักของงานนี้คือการแสดงให้เห็นว่าสัตว์เหล่านี้กำลังจะหายไป การใช้รูปทรงเรขาคณิตที่นำมาต่อกันจนเป็นรูปเป็นร่าง สื่อถึงความเปราะบางว่า 'หากชิ้นส่วนใดชิ้นส่วนหนึ่งหายไป ภาพรวมทั้งหมดก็จะพังทลายลง' เหมือนกับระบบนิเวศที่ถ้าสายพันธุ์หนึ่งสูญพันธุ์ไป ก็จะกระทบต่อสมดุลทั้งหมด"
+
+## Polar bear slide-in
+
+The polar bear uses a dedicated, slightly faster spring to maintain a responsive feel:
+
+```javascript
+const bearSpring = useSpring(smoothProgress, {
+  stiffness: 45,
+  damping: 30,
+  restDelta: 0.001,
+});
+```
+
+It slides in from the right between progress 0.75 and 0.92:
+
+```javascript
+const bearX       = useTransform(bearSpring, [0.75, 0.92], [450, 0]);
+const bearOpacity = useTransform(bearSpring, [0.75, 0.85, 0.92], [0, 1, 1]);
+```
+
+An information box next to the bear fades and scales in on the same range and carries the second conservation message:
+
+> "Polygon art หรือ Low poly คือสไตล์ศิลปะดิจิทัลที่ใช้รูปหลายเหลี่ยมจำนวนน้อย ๆ สร้างภาพหรือโมเดล โดยเน้นความเรียบง่ายและมุมมองแบบเรขาคณิตแทนรายละเอียดสมจริง มันเกิดจากกราฟิกคอมพิวเตอร์ยุคแรกๆ ที่เครื่องมือจำกัดจำนวนโพลีกอนต่ำเพื่อประสิทธิภาพ แต่ปัจจุบันกลายเป็นสไตล์ศิลปะยอดนิยมในเกม วิดีโอ และภาพประกอบ"
+
+## Scroll scrubber
+
+A horizontal range input overlays the scene and provides an alternative way to scrub through the parallax on mobile and tablet.
+
+**Scroll → slider:** `useMotionValueEvent` listens to `scrollYProgress` changes and calls `setSliderValue(v * 100)`.
+
+**Slider → scroll:** The `onChange` handler converts the slider value back to a pixel offset and calls `window.scrollTo`:
+
+```javascript
+const handleSliderChange = (e) => {
+  const val = Number(e.target.value) / 100;
+  const container = containerRef.current;
+  if (!container) return;
+  const maxScroll = container.scrollHeight - window.innerHeight;
+  window.scrollTo({ top: val * maxScroll });
+};
+```
+
+A progress bar (`scrubber-fill`) fills proportionally to match the thumb position for a visual track indicator.
+
+<Info>
+  The scroll hint (`showHint`) is visible initially and hides automatically once `scrollYProgress` exceeds `0.02`.
+</Info>

@@ -1,0 +1,115 @@
+---
+title: "ParallaxElement"
+description: "A local Framer Motion wrapper in Landing.jsx that applies scroll-driven parallax transforms (translate, scale, rotate, opacity) to any child element."
+---
+
+`ParallaxElement` is a local component defined at the top of `src/pages/Landing.jsx`. It is **not** a published npm package — if you need the same behaviour on a new page, copy the component into that page file.
+
+## How it works
+
+`ParallaxElement` uses Framer Motion's `useScroll` to track how far the target element has travelled through the viewport (`0` = element's bottom is at the viewport bottom, `1` = element's top is at the viewport top). A `useSpring` with `stiffness: 100, damping: 30, restDelta: 0.001` smooths the raw scroll progress before driving the transform values.
+
+```javascript
+// Landing.jsx
+const { scrollYProgress } = useScroll({
+  target: ref,
+  offset: offset, // default: ["start end", "end start"]
+});
+
+const smoothProgress = useSpring(scrollYProgress, {
+  stiffness: 100,
+  damping: 30,
+  restDelta: 0.001,
+});
+```
+
+## 2-value vs 3-value range format
+
+All range props accept either two or three values:
+
+| Format | Maps to scroll progress |
+|---|---|
+| `[start, end]` | `[0, 1]` — linear from enter to exit |
+| `[start, center, end]` | `[0, 0.5, 1]` — keyframe at midpoint |
+
+```javascript
+// Landing.jsx — getInputRange helper
+const getInputRange = (range) => (range.length === 3 ? [0, 0.5, 1] : [0, 1]);
+```
+
+For example, `yRange={["40%", "0%", "-10%"]}` means: start at `40%` offset when entering, reach `0%` at mid-scroll, and drift to `-10%` when exiting.
+
+## Props
+
+<ParamField path="yRange" type="string[]" default='["0%", "0%"]'>
+  Vertical translation keyframes. Value when the element **enters** the viewport (bottom of screen) to value when it **exits** (top of screen). Accepts CSS length strings such as `"40%"`, `"-10%"`, `"100px"`.
+</ParamField>
+
+<ParamField path="xRange" type="string[]" default='["0%", "0%"]'>
+  Horizontal translation keyframes, same format as `yRange`.
+</ParamField>
+
+<ParamField path="scaleRange" type="number[]">
+  Scale keyframes. Not applied if omitted. Example: `[0.8, 1, 0.9]`.
+</ParamField>
+
+<ParamField path="rotateRange" type="string[]">
+  Rotation keyframes as CSS angle strings. Not applied if omitted. Example: `["-10deg", "0deg", "5deg"]`.
+</ParamField>
+
+<ParamField path="opacityRange" type="number[]">
+  Opacity keyframes (`0`–`1`). Not applied if omitted. Example: `[0, 1, 1]`.
+</ParamField>
+
+<ParamField path="opacityInputRange" type="number[]">
+  Custom scroll-progress input range for opacity. Overrides the automatic 2-value / 3-value detection. Useful when opacity should change at non-standard scroll positions.
+</ParamField>
+
+<ParamField path="offset" type="string[]" default='["start end", "end start"]'>
+  Framer Motion scroll offset describing when tracking starts and ends. The default covers the full visual lifecycle of the element.
+</ParamField>
+
+<ParamField path="className" type="string" default='""'>
+  Extra CSS class applied to the wrapping `motion.div`.
+</ParamField>
+
+<ParamField path="style" type="object" default='{}'>
+  Inline styles merged into the `motion.div` style prop. Transform properties (`y`, `x`, `scale`, `rotate`, `opacity`) are applied by the component and should not be set here.
+</ParamField>
+
+## Multi-prop usage example
+
+The irrawaddy dolphin section combines four transform ranges simultaneously:
+
+```jsx
+// Landing.jsx
+<ParallaxElement
+  yRange={["40%", "0%", "-10%"]}
+  xRange={["30%", "0%", "10%"]} // Enter from right and drift further right
+  scaleRange={[0.8, 1, 0.9]}
+  rotateRange={["-10deg", "0deg", "5deg"]}
+  style={{ width: "100%", display: "flex", justifyContent: "center" }}
+>
+  <div className="irrawaddy-dolphin-v2">
+    {/* shards */}
+  </div>
+</ParallaxElement>
+```
+
+The `AnimalInfoBox` component adds opacity fade-in on top of y-translation:
+
+```jsx
+// Landing.jsx — inside AnimalInfoBox
+<ParallaxElement
+  yRange={["20%", "0%", "-5%"]}
+  opacityRange={[0, 1, 1]}
+  className={`animal-info-box-v2 ${align} ${className}`}
+  style={{ position: "absolute" }}
+>
+  {/* info card content */}
+</ParallaxElement>
+```
+
+<Warning>
+  `ParallaxElement` uses the React hooks `useTransform` and `useSpring` and must be used inside a component — it cannot be called conditionally. Do not render it inside loops with dynamic key changes.
+</Warning>

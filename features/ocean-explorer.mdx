@@ -1,0 +1,109 @@
+---
+title: "Ocean explorer"
+description: "The /landing route is a long-scroll parallax ocean scene that introduces all 10 endangered Thai marine animals using low-poly polygon art."
+---
+
+The `/landing` route is a full-page vertical scroll experience. As the user scrolls down, each of the 10 featured marine animals swims into view alongside a brief information card. The page is built almost entirely from the local `ParallaxElement` helper and Framer Motion's `useScroll` / `useTransform` hooks.
+
+## Page-level elements
+
+| Element | Description |
+|---|---|
+| `UnderwaterEnvironment` | Three.js/React Three Fiber background (floating shards, bioluminescent particles, surface glow) |
+| `MarineSnow` | 30 randomly-placed CSS particles that drift downward continuously |
+| `LightRays` | Five animated CSS light rays emanating from the top of the first section |
+| `DepthIndicator` | Fixed sidebar gauge that maps scroll progress (0→1) to a simulated depth (0→2000 m) |
+| `SoundController` | Ambient background music toggle, passed `bgSound` from `../assets/sound/bg-sound.MP3` |
+| `BackToTop` | Button that appears at the very bottom of the page (scrollYProgress > 0.99) |
+| Back button | Rendered via `createPortal` into `document.body`; navigates to `/stages` with `skipIntro: true` |
+
+## `ParallaxElement` helper
+
+`ParallaxElement` is a local component defined at the top of `Landing.jsx`. It wraps any children in a `motion.div` and drives transforms based on the element's own scroll progress through the viewport.
+
+See [ParallaxElement](/features/components/parallax) for full prop documentation.
+
+### Quick usage
+
+```jsx
+<ParallaxElement
+  yRange={["40%", "0%", "-10%"]}
+  xRange={["30%", "0%", "10%"]}
+  scaleRange={[0.8, 1, 0.9]}
+  rotateRange={["-10deg", "0deg", "5deg"]}
+  style={{ width: "100%", display: "flex", justifyContent: "center" }}
+>
+  {/* polygon animal or scene element */}
+</ParallaxElement>
+```
+
+## `AnimalInfoBox` component
+
+`AnimalInfoBox` is an internal component that reads data from `animalDetails.json` and renders a name, intro excerpt, and a link to the detail page for a given animal.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `animalId` | `string` | — | ID string matching the animal's `id` field in `animalDetails.json` |
+| `align` | `"left"` \| `"right"` | `"left"` | Aligns the card to the left or right of its section |
+| `isOpaque` | `boolean` | `false` | Adds the `opaque-v2` CSS class for a more solid background (used when the card overlaps a complex scene) |
+| `className` | `string` | `""` | Extra class for section-specific positioning |
+
+Every `AnimalInfoBox` is itself wrapped in a `ParallaxElement` with `yRange={["20%", "0%", "-5%"]}` and `opacityRange={[0, 1, 1]}`, so it fades and slides in as the user scrolls.
+
+## Animal sections (scroll order)
+
+The page renders animals in the following order as you scroll from top to bottom:
+
+| # | Animal ID | Info box alignment | Notes |
+|---|---|---|---|
+| 1 | `irrawaddyDolphin` | left | Enters from right (`xRange` starts at `30%`) |
+| 2 | `dolphin` | right | Enters from left (`xRange` starts at `-30%`) |
+| 3 | `stingray` | left | Enters from right; smaller scale (`scaleRange` starts at `0.7`) |
+| 4 | `dugong` | right | Enters from left |
+| 5 | `turtle` | right (opaque) | Layered in front of `middleSceneOverlay` rock SVG |
+| 6 | `ronin` | left | Shares section with sawfishes and two side-scene SVGs |
+| 7 | `sawfishes` | right | Same section as ronin |
+| 8 | `orca` | left (opaque) | |
+| 9 | `spermWhale` | right | |
+| 10 | `blueWhale` | left (opaque) | Enters straight vertically (`xRange` stays `0%`) |
+
+## Real `ParallaxElement` example from source
+
+The irrawaddy dolphin section uses four simultaneous transform ranges:
+
+```jsx
+// Landing.jsx — irrawaddy dolphin section
+<ParallaxElement
+  yRange={["40%", "0%", "-10%"]}
+  xRange={["30%", "0%", "10%"]} // Enter from right and drift further right away from left box
+  scaleRange={[0.8, 1, 0.9]}
+  rotateRange={["-10deg", "0deg", "5deg"]}
+  style={{ width: "100%", display: "flex", justifyContent: "center" }}
+>
+  <div className="irrawaddy-dolphin-v2">
+    <div className="irrawaddy-wrapper-v2">
+      {ANIMALS.find((a) => a.id === "irrawaddyDolphin")?.shards.map(
+        (shard, index) => (
+          <div
+            key={index}
+            className="shard"
+            style={{
+              clipPath: shard.clipPath,
+              backgroundColor: shard.color,
+              width: "100%",
+              height: "100%",
+              position: "absolute",
+              top: 0,
+              left: 0,
+            }}
+          />
+        ),
+      )}
+    </div>
+  </div>
+</ParallaxElement>
+```
+
+<Note>
+  The `LightRays` and `MarineSnow` components are rendered unconditionally at the top of the page; they do not use `ParallaxElement` because they are not scroll-driven — they animate via CSS keyframes.
+</Note>

@@ -1,0 +1,116 @@
+---
+title: "SoundController"
+description: "A floating audio toggle widget that manages background music playback across the ocean explorer and animal detail pages, with graceful browser autoplay policy handling."
+---
+
+`SoundController` lives in `src/components/SoundController.jsx`. It renders a fixed-position button that toggles the background music on and off, plus a volume slider that appears on hover.
+
+## Props
+
+<ParamField path="bgSound" type="string" required>
+  Path or URL to the audio file to play in a loop. Pass an imported asset reference so Vite resolves the correct hashed URL at build time.
+
+  ```jsx
+  import bgSound from "../assets/sound/bg-sound.MP3";
+
+  <SoundController bgSound={bgSound} />
+  ```
+</ParamField>
+
+## Behavior
+
+### Initial state
+
+The component mounts with `isMuted = true`. The audio element is present in the DOM (`<audio ref={audioRef} src={bgSound} loop preload="auto" />`), but playback does not start until the user interacts.
+
+### Browser autoplay policy
+
+Browsers block `audio.play()` calls that are not triggered by a direct user gesture. `SoundController` handles this by attaching capture-phase listeners to eight different interaction events on `window`:
+
+```javascript
+window.addEventListener("click",        startAudio, { capture: true });
+window.addEventListener("mousedown",    startAudio, { capture: true });
+window.addEventListener("pointerdown",  startAudio, { capture: true });
+window.addEventListener("touchstart",   startAudio, { passive: true });
+window.addEventListener("wheel",        startAudio, { passive: true });
+window.addEventListener("scroll",       startAudio, { passive: true });
+window.addEventListener("keydown",      startAudio, { capture: true });
+window.addEventListener("pointermove",  startAudio, { passive: true });
+```
+
+Once `audio.play()` resolves successfully, all listeners are removed and `isMuted` is set to `false`. If the browser still rejects playback (e.g., the policy requires an explicit click), the listeners remain and retry on the next interaction.
+
+<Warning>
+  The autoplay listener logic only fires when `isMuted` is `true` **and** `userIntentionalMute.current` is `false`. If the user explicitly muted the audio by clicking the toggle, `userIntentionalMute.current` is set to `true` and auto-start is suppressed — the music will not restart on the next scroll or click.
+</Warning>
+
+### Toggle behavior
+
+Clicking the toggle button calls `toggleSound`:
+
+- **When muted:** sets `userIntentionalMute = false`, restores volume, calls `audio.play()`.
+- **When playing:** sets `userIntentionalMute = true`, calls `audio.pause()`.
+
+The button shows a speaker-with-soundwaves icon when audio is active, and a speaker-with-X icon when muted.
+
+### Volume slider
+
+A `<input type="range" min="0" max="1" step="0.01">` appears when the user hovers over the control. Dragging it to `0` pauses the audio and sets `isMuted = true`. Dragging it above `0` while muted resumes playback.
+
+```jsx
+// SoundController.jsx — hover-reveal volume slider
+<AnimatePresence>
+  {isHovered && (
+    <motion.div
+      className="volume-slider-wrapper-v2"
+      initial={{ width: 0, opacity: 0, paddingRight: 0 }}
+      animate={{ width: 100, opacity: 1, paddingRight: 10 }}
+      exit={{ width: 0, opacity: 0, paddingRight: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={volume}
+        onChange={handleVolumeChange}
+        className="volume-slider-v2"
+      />
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+### Global `triggerSoundPlay`
+
+The component exposes `window.triggerSoundPlay()`, a function that forces audio to play and clears the muted state. This allows parent components or portal-rendered elements to programmatically start music after a confirmed user interaction.
+
+## Usage examples
+
+<Tabs>
+  <Tab title="Landing.jsx">
+    ```jsx
+    import SoundController from "../components/SoundController";
+    import bgSound from "../assets/sound/bg-sound.MP3";
+
+    // Inside the Landing component return:
+    <SoundController bgSound={bgSound} />
+    ```
+  </Tab>
+  <Tab title="DetailPage.jsx">
+    The detail page hides `SoundController` while the modal is open to prevent the toggle from appearing over the overlay:
+
+    ```jsx
+    import SoundController from "../components/SoundController";
+    import bgSound from "../assets/sound/bg-sound.MP3";
+
+    // Inside the DetailPage component return:
+    {!showModal && <SoundController bgSound={bgSound} />}
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  The component animates in with a 1-second delay (`transition={{ delay: 1 }}`) so it does not compete visually with the page's entry animations.
+</Info>

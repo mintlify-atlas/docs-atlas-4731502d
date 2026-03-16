@@ -1,0 +1,100 @@
+---
+title: "UnderwaterEnvironment"
+description: "A collection of ambient visual components that compose the dark ocean background used across the detail and ocean explorer pages."
+---
+
+`UnderwaterEnvironment` and its named sibling exports live in `src/components/UnderwaterEnvironment.jsx`. The file is built with React and Framer Motion — there is no Three.js or React Three Fiber dependency despite the cinematic result.
+
+## Named exports
+
+| Export | Type | Description |
+|---|---|---|
+| `default` (`UnderwaterEnvironment`) | Component | Composes `BackgroundShards`, `VibrantParticles`, and `SurfaceGlow` into a single ambient background layer |
+| `ShardExplosion` | Component | A burst of 10 colored triangular shards that animate outward from a given screen coordinate — used on tab button clicks in `DetailPage` |
+| `ModalDecorations` | Component | Corner brackets and 10 subtly floating diamond shards rendered inside the detail modal card |
+| `BackgroundShards` | Component | 20 low-opacity floating diamond shards that drift upward continuously (used internally by `UnderwaterEnvironment`) |
+| `VibrantParticles` | Component | 30 bioluminescent plankton particles that pulse and drift (used internally by `UnderwaterEnvironment`) |
+| `SurfaceGlow` | Component | A single `div.surface-glow` creating a subtle top-of-scene light bloom |
+
+## When each export is used
+
+<Tabs>
+  <Tab title="UnderwaterEnvironment">
+    Used as the full-page animated background in both `Landing.jsx` and `DetailPage.jsx`.
+
+    ```jsx
+    // Landing.jsx
+    import UnderwaterEnvironment from "../components/UnderwaterEnvironment";
+
+    <div className="landing-bg">
+      <UnderwaterEnvironment />
+      <MarineSnow />
+    </div>
+    ```
+
+    ```jsx
+    // DetailPage.jsx
+    import UnderwaterEnvironment from "../components/UnderwaterEnvironment";
+
+    <div className="explore-bg">
+      <UnderwaterEnvironment />
+    </div>
+    ```
+  </Tab>
+  <Tab title="ShardExplosion">
+    Triggered in `DetailPage.jsx` when the user clicks a topic tab button. Multiple explosions can be active simultaneously.
+
+    ```jsx
+    import UnderwaterEnvironment, {
+      ShardExplosion,
+    } from "../components/UnderwaterEnvironment";
+
+    {explosions.map((exp) => (
+      <ShardExplosion
+        key={exp.id}
+        x={exp.x}
+        y={exp.y}
+        onComplete={() => removeExplosion(exp.id)}
+      />
+    ))}
+    ```
+
+    `ShardExplosion` spawns 10 shards using colors `#ffffff`, `#7dd3fc`, `#38bdf8`, and `#2dd4bf`. Each shard flies outward at a random angle and speed over 0.6 s, fading and shrinking to `scale: 0.2`.
+  </Tab>
+  <Tab title="ModalDecorations">
+    Rendered inside the modal glass card in `DetailPage.jsx` to add themed geometric ornaments.
+
+    ```jsx
+    import UnderwaterEnvironment, {
+      ModalDecorations,
+    } from "../components/UnderwaterEnvironment";
+
+    <motion.div className="modal-glass-card" ...>
+      <ModalDecorations />
+      {/* modal content */}
+    </motion.div>
+    ```
+
+    `ModalDecorations` renders four corner bracket `div`s plus 10 `modal-shard` elements that gently bob and rotate in a looping animation.
+  </Tab>
+</Tabs>
+
+## Full import reference
+
+```jsx
+// Default import only
+import UnderwaterEnvironment from "../components/UnderwaterEnvironment";
+
+// Named exports only
+import { ShardExplosion, ModalDecorations } from "../components/UnderwaterEnvironment";
+
+// Default + named (as used in DetailPage.jsx)
+import UnderwaterEnvironment, {
+  ShardExplosion,
+  ModalDecorations,
+} from "../components/UnderwaterEnvironment";
+```
+
+<Info>
+  All animations inside this file use Framer Motion's declarative `animate` prop with `repeat: Infinity`. No imperative animation loops or `requestAnimationFrame` calls are used.
+</Info>

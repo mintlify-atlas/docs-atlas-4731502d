@@ -1,0 +1,64 @@
+---
+title: Introduction
+description: An overview of Low-Poly Ocean — an interactive educational experience using low-poly polygon art to spotlight 10 endangered Thai marine animals.
+---
+
+Low-Poly Ocean is an interactive React web application that uses low-poly polygon art to educate users about 10 endangered Thai marine animals. Each animal is rendered as a mosaic of triangular shards that assemble themselves on screen, creating a visually striking way to explore marine conservation topics.
+
+The app is built for curiosity. You move through three connected stages — discovering animals in an ocean explorer, diving into species details, and learning why polygon art was chosen as the visual language.
+
+## The three-stage structure
+
+The experience is designed as a linear journey with three distinct stops:
+
+| Stage | Route | Purpose |
+|---|---|---|
+| Ocean Explorer | `/stages` | Browse all 10 animals on an animated ocean canvas |
+| Animal Detail | `/detail?id=<animalId>` | Read conservation facts across three topics |
+| Why Polygon? | `/polygon` | Learn the rationale behind the low-poly aesthetic |
+
+The root path `/` redirects automatically to `/stages`, so users land directly in the ocean explorer.
+
+## Tech stack
+
+Low-Poly Ocean is built entirely with modern front-end tooling. No back-end server is required.
+
+| Technology | Version | Role |
+|---|---|---|
+| React | 19 | UI rendering and component model |
+| Vite | 7 | Build tool and dev server |
+| React Router | 7 | Client-side routing with `BrowserRouter` |
+| Framer Motion | 12 | Shard animation and page transitions |
+| Three.js / React Three Fiber | 0.182 / 9 | 3D underwater environment rendering |
+| @react-three/drei | 10 | Three.js helpers (controls, loaders, effects) |
+
+## Quick navigation
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Clone the repo, install dependencies, and run the dev server in under two minutes.
+  </Card>
+  <Card title="Architecture overview" icon="sitemap" href="/architecture/overview">
+    Understand the folder structure, data flow, and how the three pages connect.
+  </Card>
+  <Card title="Routing" icon="route" href="/architecture/routing">
+    See every route defined in `main.jsx` and how navigation between stages works.
+  </Card>
+  <Card title="Data model" icon="database" href="/architecture/data-model">
+    Explore the `ANIMALS` array and `animalDetails.json` schema that power every animal card.
+  </Card>
+</CardGroup>
+
+## Conservation mission
+
+All 10 animals featured in the app are endangered species found in Thai waters. The content for each animal covers three conservation topics:
+
+- **Introduction** — physical characteristics, habitat, and behavior
+- **Threats** — human activities and natural pressures driving population decline
+- **Solutions** — legal protections, rescue procedures, and community actions
+
+The species include the Leatherback Turtle, Dugong, Orca, Indo-Pacific Humpback Dolphin (Pink Dolphin), Blue Whale, Irrawaddy Dolphin, and others. By wrapping this information in an engaging visual format, Low-Poly Ocean aims to make marine conservation accessible to a general audience.
+
+<Note>
+All animal content is sourced from Thai marine conservation documentation and is written in Thai. The interface language is Thai throughout.
+</Note>

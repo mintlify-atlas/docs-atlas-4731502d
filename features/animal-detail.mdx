@@ -1,0 +1,152 @@
+---
+title: "Animal detail"
+description: "The /detail route displays a single endangered animal assembled from polygon shards, with tabbed information panels and left/right navigation between all 10 animals."
+---
+
+The `/detail` route accepts an `id` query parameter and displays the matching animal's low-poly sculpture alongside three topic tabs. Clicking a tab fires a shard explosion effect at the cursor and opens a full-screen modal.
+
+## URL and valid animal IDs
+
+```
+/detail?id=<animalId>
+```
+
+The `id` parameter is matched case-insensitively against the `id` field in `ANIMALS` from `animalConfig.js`. If no match is found the page falls back to index 0.
+
+Valid values:
+
+```
+irrawaddyDolphin  dolphin  stingray  dugong  turtle
+ronin  sawfishes  orca  spermWhale  blueWhale
+```
+
+## Shard assembly animation
+
+When the page loads (or when the user navigates to a new animal), each shard flies in from a scattered position and assembles into the complete polygon shape.
+
+### Key constants
+
+```javascript
+// DetailPage.jsx
+const DURATION = 1.0;            // seconds each shard takes to travel to its final position
+const TARGET_STAGGER_TIME = 1.25; // seconds for the entire assembly to complete
+```
+
+### Stagger formula
+
+```javascript
+const staggerPerShard = TARGET_STAGGER_TIME / Math.max(1, totalShards);
+```
+
+Each shard gets a delay of `rank * staggerPerShard`, where `rank` is the shard's position in the sorted order array (0…N-1). This normalises the delay regardless of how sparse or large the `order` values are.
+
+### Scatter positions
+
+Before `isReady` flips to `true` (50 ms after mount), every shard is placed at a scatter position calculated from its index using the golden angle:
+
+```javascript
+const angle = index * 137.5 * (Math.PI / 180); // golden angle distribution
+const radius = 600 + (index % 10) * 100;        // varying distance
+const tx = Math.cos(angle) * radius;
+const ty = Math.sin(angle) * radius;
+const rot = (index * 45) % 360;
+```
+
+### Shimmer effect
+
+After the last shard arrives, the component applies the `shimmer-ready` CSS class to all shards. The exact time is calculated as:
+
+```javascript
+const maxDelay = (totalShards - 1) * staggerPerShard;
+const assemblyDuration = (maxDelay + DURATION) * 1000; // ms
+// shimmer fires after assemblyDuration + 100ms buffer
+```
+
+The `shimmer-ready` class triggers a CSS shimmer sweep animation across the assembled sculpture, giving a polished "fully rendered" signal to the user.
+
+## ShardExplosion effect
+
+Every time the user clicks a topic tab button (`ghost-btn`), the component:
+
+1. Reads `e.clientX` / `e.clientY` from the click event.
+2. Pushes `{ id: Date.now(), x, y }` into the `explosions` state array.
+3. Renders a `<ShardExplosion x={exp.x} y={exp.y} onComplete={...} />` at that position.
+4. On animation completion (`onComplete`), removes the explosion from the array.
+
+```jsx
+const triggerExplosion = (x, y) => {
+  const id = Date.now();
+  setExplosions((prev) => [...prev, { id, x, y }]);
+};
+```
+
+See [UnderwaterEnvironment](/features/components/underwater-environment) for the `ShardExplosion` implementation.
+
+## Topic tabs
+
+Three topic buttons appear below the animal sculpture. The keys and labels come from `ANIMAL_DETAILS.topics` in `animalDetails.json`:
+
+| Key | Label (Thai) | Icon |
+|---|---|---|
+| `intro` | Introduction | Magnifying glass |
+| `threat` | Threats | Octagon warning |
+| `solution` | Conservation | Crosshair circle |
+
+### Modal overlay
+
+Clicking any tab opens a full-screen modal animated with Framer Motion's `AnimatePresence`:
+
+- The overlay fades in (`opacity: 0 → 1`, 0.4 s).
+- The glass card slides up from the bottom (`y: 100vh → 0`, 0.4 s ease-in-out).
+- `ModalDecorations` renders corner brackets and floating shards inside the card.
+- Switching tabs while the modal is open fades the content area out (300 ms) before swapping text.
+- Clicking the overlay backdrop or the ✕ button closes the modal; a 450 ms lockout on `isClosing` prevents double-close races.
+
+```jsx
+<AnimatePresence>
+  {showModal && (
+    <motion.div
+      key="modal-overlay"
+      className="modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      onClick={closeModal}
+    >
+      <motion.div
+        key="modal-card"
+        className="modal-glass-card"
+        initial={{ y: "100vh", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100vh", opacity: 0 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ... */}
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+<Note>
+  The `SoundController` is hidden while the modal is open (`{!showModal && <SoundController bgSound={bgSound} />}`) to prevent the toggle button from appearing behind the modal overlay.
+</Note>
+
+## Left / right navigation
+
+Arrow buttons on either side of the sculpture call `changeAnimal(delta)`, where `delta` is `+1` (next) or `-1` (previous). Navigation wraps around — going left from index 0 lands on the last animal.
+
+```javascript
+const changeAnimal = (delta) => {
+  setCurrentIndex((prev) => {
+    const next = (prev + delta + levels.length) % levels.length;
+    setDirection(next > prev ? "left" : "right");
+    setActiveTabKey(topicKeys[0]); // reset tab to intro
+    return next;
+  });
+};
+```
+
+The `direction` value controls the order in which shards animate — left-to-right for forward navigation, right-to-left for backward — creating a directional assembly feel.

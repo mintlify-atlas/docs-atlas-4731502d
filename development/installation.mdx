@@ -1,0 +1,131 @@
+---
+title: "Installation"
+description: "Set up the Low-Poly Ocean project on your local machine."
+---
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **Node.js 18 or later** — [nodejs.org](https://nodejs.org)
+- A package manager: **npm** (bundled with Node.js), **yarn**, or **pnpm**
+- **Git**
+
+## Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/ajipitchayapong/projectSecret.git
+    cd projectSecret
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+
+      ```bash pnpm
+      pnpm install
+      ```
+    </CodeGroup>
+
+    This installs both the runtime dependencies (React, Framer Motion, React Router, Three.js) and the dev dependencies (Vite, ESLint).
+  </Step>
+
+  <Step title="Start the development server">
+    <CodeGroup>
+      ```bash npm
+      npm run dev
+      ```
+
+      ```bash yarn
+      yarn dev
+      ```
+
+      ```bash pnpm
+      pnpm dev
+      ```
+    </CodeGroup>
+
+    Vite starts a local server at `http://localhost:5173` by default. The terminal output shows the exact URL.
+
+    <Note>
+      The server is configured with `host: true` and `allowedHosts: true`, which means it also binds to your machine's local network address. This is useful for testing on mobile devices on the same network.
+    </Note>
+  </Step>
+</Steps>
+
+## Available scripts
+
+All scripts are defined in `package.json` and run through your package manager.
+
+| Script | Command | Description |
+|---|---|---|
+| `dev` | `vite` | Start the development server with hot module replacement |
+| `build` | `vite build` | Compile and bundle the app for production into `dist/` |
+| `preview` | `vite preview` | Serve the production build locally for testing |
+| `lint` | `eslint .` | Run ESLint across all `.js` and `.jsx` files |
+
+<CodeGroup>
+  ```bash npm
+  npm run dev
+  npm run build
+  npm run preview
+  npm run lint
+  ```
+
+  ```bash yarn
+  yarn dev
+  yarn build
+  yarn preview
+  yarn lint
+  ```
+
+  ```bash pnpm
+  pnpm dev
+  pnpm build
+  pnpm preview
+  pnpm lint
+  ```
+</CodeGroup>
+
+## What gets installed
+
+The project uses the following key packages:
+
+**Runtime dependencies**
+
+| Package | Version | Purpose |
+|---|---|---|
+| `react` | ^19.2.0 | UI library |
+| `react-dom` | ^19.2.0 | DOM rendering |
+| `react-router-dom` | ^7.12.0 | Client-side routing |
+| `framer-motion` | ^12.29.0 | Animation and scroll-driven effects |
+| `three` | ^0.182.0 | 3D rendering engine |
+| `@react-three/fiber` | ^9.5.0 | React renderer for Three.js |
+| `@react-three/drei` | ^10.7.7 | Helpers for React Three Fiber |
+
+**Dev dependencies**
+
+| Package | Version | Purpose |
+|---|---|---|
+| `vite` | ^7.2.2 | Build tool and dev server |
+| `@vitejs/plugin-react` | ^5.1.0 | React Fast Refresh and JSX transform |
+| `eslint` | ^9.39.1 | Linter |
+| `eslint-plugin-react-hooks` | ^7.0.1 | Rules of Hooks enforcement |
+| `eslint-plugin-react-refresh` | ^0.4.24 | Fast Refresh compatibility checks |
+
+## Verify the setup
+
+After starting the dev server, open `http://localhost:5173` in your browser. You should see the Low-Poly Ocean intro animation. Navigate to `/stages` to reach the ocean explorer.
+
+<Tip>
+  Run `npm run lint` before committing to catch any issues early. The ESLint config enforces React Hooks rules and warns on unused variables.
+</Tip>

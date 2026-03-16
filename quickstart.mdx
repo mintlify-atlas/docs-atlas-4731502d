@@ -1,80 +1,129 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Clone the Low-Poly Ocean repository, install dependencies, and run the development server in under five minutes.
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+Before you begin, make sure you have the following installed:
 
-### Step 1: Set up your local environment
+- **Node.js** 18 or later
+- A package manager: **npm** (bundled with Node.js), **yarn**, or **pnpm**
+- **Git**
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Set up the project
 
-### Step 2: Deploy your changes
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/ajipitchayapong/projectSecret.git
+    cd projectSecret
+    ```
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Step title="Install dependencies">
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+      ```bash yarn
+      yarn install
+      ```
+      ```bash pnpm
+      pnpm install
+      ```
+    </CodeGroup>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    This installs all runtime and dev dependencies defined in `package.json`, including React 19, Framer Motion, Three.js, and React Router.
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Start the development server">
+    <CodeGroup>
+      ```bash npm
+      npm run dev
+      ```
+      ```bash yarn
+      yarn dev
+      ```
+      ```bash pnpm
+      pnpm dev
+      ```
+    </CodeGroup>
 
-### Step 3: Go live
+    Vite starts the dev server with hot module replacement (HMR). By default it listens on all interfaces (`host: true`) so you can also access it from other devices on the same network.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    ```
+    VITE v7.x.x  ready in XXXms
+
+    ➜  Local:   http://localhost:5173/
+    ➜  Network: http://192.168.x.x:5173/
+    ```
+  </Step>
+
+  <Step title="Open the app">
+    Navigate to [http://localhost:5173](http://localhost:5173) in your browser.
+
+    The root path `/` redirects to `/stages`, where the three-stage navigation hub loads with an animated intro sequence.
+  </Step>
+</Steps>
+
+## Available routes
+
+| Route | Page | Description |
+|---|---|---|
+| `/` | — | Redirects to `/stages` |
+| `/stages` | Stages hub | Animated intro + three-stage navigation |
+| `/landing` | Ocean explorer | Parallax scroll scene with all 10 animals |
+| `/detail` | Animal detail | Polygon shard animation + species info |
+| `/detail?id=<animalId>` | Animal detail | Opens directly to a specific animal |
+| `/polygon` | Why Polygon? | Horizontal scroll explainer scene |
+| `/order` | Orderer (dev tool) | Internal tool for configuring shard animation order |
+
+## Build for production
+
+<CodeGroup>
+  ```bash npm
+  npm run build
+  ```
+  ```bash yarn
+  yarn build
+  ```
+  ```bash pnpm
+  pnpm build
+  ```
+</CodeGroup>
+
+Vite bundles the app into the `dist/` directory. To preview the production build locally:
+
+<CodeGroup>
+  ```bash npm
+  npm run preview
+  ```
+  ```bash yarn
+  yarn preview
+  ```
+  ```bash pnpm
+  pnpm preview
+  ```
+</CodeGroup>
+
+<Note>
+The production build requires the SPA rewrite rule configured in `vercel.json` (or an equivalent server-side rewrite) so that all routes serve `index.html`. See the [Deployment guide](/development/deployment) for details.
+</Note>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Architecture overview" icon="sitemap" href="/architecture/overview">
+    Learn how the pages, components, and data files are organized.
+  </Card>
+  <Card title="Add an animal" icon="plus" href="/development/adding-animals">
+    Contribute a new polygon animal to the experience.
+  </Card>
+  <Card title="Marine animals" icon="fish" href="/animals/overview">
+    Browse the 10 endangered species already in the project.
+  </Card>
+  <Card title="Deployment" icon="cloud" href="/development/deployment">
+    Deploy your own instance to Vercel or another static host.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
